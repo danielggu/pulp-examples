@@ -1,5 +1,9 @@
 # Import PuLP modeler required functions
-from pulp import LpProblem, LpVariable, LpMinimize, LpStatus, lpSum, value
+from pulp import LpProblem, LpVariable, LpMinimize, lpSum
+# Import utils
+import sys
+sys.path.append('.')
+from print_utils import printModelSolution
 
 #### Problem data
 
@@ -40,10 +44,4 @@ for j in nutrients: myProblem += lpSum([p[i][j] * x[i] for i in foods]) >= q[j]
 
 myProblem.writeLP('DietModel.lp')
 myProblem.solve()   # This will use the default PuLP solver
-# Print the results
-status = LpStatus[myProblem.status]
-print('Status:', status)
-if status == 'Optimal':
-    print('Optimal values:')
-    for v in myProblem.variables(): print(v.name, '=', v.varValue)
-    print('Optimal objective function value:', value(myProblem.objective))
+printModelSolution(myProblem)   # Print the results

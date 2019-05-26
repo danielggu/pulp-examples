@@ -1,5 +1,9 @@
 # Import PuLP modeler required functions
-from pulp import LpProblem, LpVariable, LpMaximize, LpStatus, lpSum, value
+from pulp import LpProblem, LpVariable, LpMaximize, lpSum
+# Import utils
+import sys
+sys.path.append('.')
+from print_utils import printModelSolution
 
 #### Problem data
 
@@ -24,10 +28,4 @@ myProblem += lpSum([w[i] * x[i] for i in items]) <= C   # Capacity constraint
 
 myProblem.writeLP('KnapsackModel.lp')
 myProblem.solve()
-# Print the results
-status = LpStatus[myProblem.status]
-print('Status:', status)
-if status == 'Optimal':
-    print('Optimal values:')
-    for v in myProblem.variables(): print(v.name, '=', v.varValue)
-    print('Optimal objective function value:', value(myProblem.objective))
+printModelSolution(myProblem)
