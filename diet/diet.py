@@ -1,41 +1,49 @@
 ## Import PuLP modeler required functions
 from pulp import LpProblem, LpVariable, LpMinimize, LpStatus, lpSum, value
 
-## Problem data
-availableFoods = [ 'a', 'b' ]
-# Quantity of nutrients per kilogram of each food (a, b)
-protein = { 'a': 30, 'b': 45 }
-calcium = { 'a': 2, 'b': 1 }
-vitamin = { 'a': 10, 'b': 5 }
-# Cost of each food per kilogram
-costs = { 'a': 0.3, 'b': 0.35 }
-# Minimum nutrients intake
-proteinRequirement = 700
-calciumRequirement = 28
-vitaminRequirement = 150 
+#### Problem data
 
-## Problem statement 
+# Indexes
+foods = [ 'a', 'b' ]
+nutrients = [ 'protein', 'calcium', 'vitamin' ]
+# Parameters
+# Here we need to define three parameters: 
+# (a) the quantity of nutrient j per kilogram of food i -> p[i][j]
+# (b) the minimum intake required of nutrient j -> q[j]
+# (c) the cost per kilogram of food i -> c[j]
+p = {
+    'a': { 'protein': 30, 'calcium': 2, 'vitamin': 10 },
+    'b': { 'protein': 45, 'calcium': 1, 'vitamin': 5 }
+}
+q = { 'protein': 700, 'calcium': 28, 'vitamin': 150 }
+c = { 'a': 0.3, 'b': 0.35 }
+
+#### Problem statement
+
 # Create a variable to store problem information
 myProblem = LpProblem('Diet Problem', LpMinimize)
 # Create a variable to store decision variables;
-# they will be named as <name>_<key> by PuLP modeler
+# they will be named as <name>_<index> by PuLP modeler
 x = LpVariable.dicts(
-    'food',         # name
-    availableFoods, # dictionary with keys
-    0               # lower bound
+    'food', # name
+    foods,  # array of indexes
+    0       # lower bound
 )
 # Add objective function (must be added first)
-myProblem += lpSum([costs[i] * x[i] for i in availableFoods])
+myProblem += lpSum([c[i] * x[i] for i in foods])
 # Add problem constraints
-myProblem += lpSum([protein[i] * x[i] for i in availableFoods]) >= proteinRequirement
-myProblem += lpSum([calcium[i] * x[i] for i in availableFoods]) >= calciumRequirement
-myProblem += lpSum([vitamin[i] * x[i] for i in availableFoods]) >= vitaminRequirement
+for j in nutrients: myProblem += lpSum([p[i][j] * x[i] for i in foods]) >= q[j]
+# Note there is no need to include x[i] >= 0 constraint since x has been
+# created with lower bound equals to zero
 
-## Solve problem using default solver
+#### Problem solution
+
 myProblem.writeLP('DietModel.lp')
-myProblem.solve()
-
-## Print the results
-print('Status: ', LpStatus[myProblem.status])
-for v in myProblem.variables(): print(v.name, '=', v.varValue)
-print('Objective function value:', value(myProblem.objective))
+myProblem.solve()   # This will use the default PuLP solver
+# Print the results
+status = LpStatus[myProblem.status]
+print('Status:', status)
+if status == 'Optimal':
+    print('Optimal values:')
+    for v in myProblem.variables(): print(v.name, '=', v.varValue)
+    print('Optimal objective function value:', value(myProblem.objective))
